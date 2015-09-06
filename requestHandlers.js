@@ -1,13 +1,13 @@
 'use strict';
 
-var exec = require('child_process').exec;
+var querystring = require('querystring');
 
 function logReq(name) {
   console.log("Request handler '" + name + "' was called.")
 };
 
-function writeTextContent(resp, content) {
-  resp.writeHead(200, {"Content-Type": "text/plain"});
+function writeTextContent(resp, content, type) {
+  resp.writeHead(200, {"Content-Type": "text/" + (type || "plain")});
   resp.write(content);
   resp.end();
 };
@@ -19,20 +19,28 @@ function writeTextContent(resp, content) {
 //   }
 // };
 
-function start(response) {
+function start(response, postData) {
   logReq("start");
-  //sleep(5000);
 
-  exec("find /",
-    { timeout: 10000, maxBuffer: 20000 * 1024 },
-    function(error, stdout, stderr) {
-      writeTextContent(response, stdout);
-  });
+  var body = '<html>' +
+    '<head>' +
+    '<meta http-equiv="Content-Type" content="text/html; ' +
+    'charset=UTF-8" />' +
+    '</head>' +
+    '<body>' +
+    '<form action="/upload" method="POST">' +
+    '<textarea name="text" rows="20" cols="60"></textarea>' +
+    '<input type="submit" value="Submit text" />' +
+    '</form>' +
+    '</body>' +
+    '</html>';
+
+  writeTextContent(response, body, "html");
 };
 
-function upload(response) {
-  logReq("upload");
-  writeTextContent(response, "Chill yer drill, Bill");
+function upload(response, postData) {
+  logReq("upload: " + postData);
+  writeTextContent(response, "You said: " + querystring.parse(postData).text);
 };
 
 exports.start = start;
